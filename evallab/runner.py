@@ -18,8 +18,22 @@ def _hash(obj) -> str:
 
 
 def run_id(suite: dict, model: Model, prompt: str) -> str:
-    """Same suite, model and prompt text give the same run id, so a run resumes instead of restarting."""
-    return f"{suite['name']}:{model.name}:{prompt}:{_hash([suite['cases'], suite['prompts'][prompt]])}"
+    """Same inputs, model and prompt text give the same run id, so a run resumes instead of restarting.
+    The answer key is left out on purpose: fixing it means re-scoring, not paying for new model calls."""
+    inputs = [[c["id"], c["input"]] for c in suite["cases"]]
+    return f"{suite['name']}:{model.name}:{prompt}:{_hash([inputs, suite['prompts'][prompt]])}"
+
+
+def rescore(suite: dict, store: Store) -> int:
+    """Apply the current answer key and scorers to every stored answer of this suite."""
+    cases, n = {c["id"]: c for c in suite["cases"]}, 0
+    for r in store.runs(suite["name"]):
+        for cid, a in store.answers(r["id"]).items():
+            if cid in cases and not a["error"]:
+                scores = score_case(suite["fields"], cases[cid]["expected"], a["output"])
+                store.save_answer(r["id"], cid, a["output"], scores, a["latency_ms"], a["tokens_in"], a["tokens_out"])
+                n += 1
+    return n
 
 
 def run(suite: dict, model: Model, prompt: str, store: Store, note: str = "") -> dict:
