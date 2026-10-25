@@ -1,0 +1,106 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow">
+<title>registry-extraction: eval-lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Fira+Code:wght@400;500&display=swap">
+<style>
+:root { --bg: #F6F5FA; --card: #FFFFFF; --ink: #1B1A2E; --muted: #5E5C74; --rule: #DDDBE8; --accent: #5B3FD0;
+  --correct: #2E8A6E; --wrong: #D08A1E; --missed: #A8A6BC; --hallucinated: #C8364D;
+  --sans: "Manrope", "Segoe UI", system-ui, sans-serif; --mono: "Fira Code", ui-monospace, monospace; }
+* { box-sizing: border-box; }
+html { background: var(--bg); color: var(--ink); }
+body { margin: 0; font: 16px/1.55 var(--sans); }
+.wrap { max-width: 74rem; margin: 0 auto; padding-inline: 1.25rem; }
+.top { padding-block: 2.5rem 1rem; }
+.crumb { margin: 0; color: var(--accent); font: 500 0.9rem var(--mono); }
+h1 { font: 700 clamp(1.9rem, 4vw, 2.7rem)/1.1 var(--sans); margin: 0.3rem 0 0; letter-spacing: -0.02em; }
+h2 { font: 700 1.15rem var(--sans); margin: 0 0 0.5rem; }
+h3 { font: 600 1rem var(--mono); margin: 0; }
+.lede { max-width: 64ch; margin: 0.7rem 0 0.4rem; }
+.meta { color: var(--muted); font-size: 0.88rem; margin: 0.2rem 0 0; }
+section { margin: 2.2rem 0 0; }
+.overview { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr; gap: 2rem; align-items: start; background: var(--card); border: 1px solid var(--rule); padding: 1.4rem; border-radius: 10px; }
+.scatter { width: 100%; max-width: 560px; height: auto; display: block; margin-top: 0.5rem; }
+.scatter .grid { stroke: var(--rule); } .scatter .tick, .scatter .axis { fill: var(--muted); font: 12px var(--sans); }
+.scatter .pt { fill: var(--accent); fill-opacity: 0.85; } .scatter .lbl { fill: var(--ink); font: 600 13px var(--mono); }
+.legend p { display: flex; align-items: center; gap: 0.5rem; margin: 0.3rem 0; }
+.seg { display: inline-block; height: 100%; }
+.legend .seg { width: 14px; height: 14px; border-radius: 3px; }
+.seg.correct { background: var(--correct); } .seg.wrong { background: var(--wrong); }
+.seg.missed { background: var(--missed); } .seg.hallucinated { background: var(--hallucinated); }
+.runs { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 1rem; }
+.run { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 1.1rem 1.2rem; }
+.run header { display: flex; gap: 0.8rem; align-items: flex-start; }
+.num { font: 600 0.9rem var(--mono); color: var(--accent); }
+.run .num { display: inline-grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: 50%; background: #ECE8FB; flex: none; }
+.kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem 1rem; margin: 1rem 0; }
+.kpis dt { color: var(--muted); font-size: 0.8rem; } .kpis dd { margin: 0; font: 700 1.5rem var(--sans); }
+.kpis .bad dd { color: var(--hallucinated); }
+.fbar { display: grid; grid-template-columns: 7.5rem 1fr 3rem; gap: 0.6rem; align-items: center; font-size: 0.85rem; margin: 0.3rem 0; }
+.track { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--rule); }
+.fnum { font: 500 0.82rem var(--mono); color: var(--muted); text-align: right; }
+.table-wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; margin-top: 0.8rem; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 0.82rem; }
+td.num { font-family: var(--mono); white-space: nowrap; }
+.v.better { color: var(--correct); font-weight: 700; } .v.worse { color: var(--hallucinated); font-weight: 700; }
+.v.no { color: var(--muted); }
+footer { color: var(--muted); font-size: 0.82rem; padding-block: 2rem 3rem; }
+@media (max-width: 800px) { .overview { grid-template-columns: 1fr; } }
+</style></head><body>
+<header class="wrap top">
+  <p class="crumb">eval-lab</p>
+  <h1>registry-extraction</h1>
+  <p class="lede">Recover structured trial facts from free text. Expected values come from the registry&#x27;s structured fields; a value not stated in the text must be answered as null.</p>
+  <p class="meta">30 cases · fields: study_type, phase, enrollment, minimum_age</p>
+</header>
+<main class="wrap">
+  <section class="overview">
+    <div><h2>Accuracy against hallucination</h2><p class="meta">Each dot is a run. Up and to the left is better.</p><svg viewBox="0 0 520 300" class="scatter" role="img" aria-label="Accuracy against hallucination rate per run"><line x1="46" x2="474" y1="254.0" y2="254.0" class="grid"/><text x="38" y="258.0" class="tick" text-anchor="end">0%</text><line x1="46" x2="474" y1="202.0" y2="202.0" class="grid"/><text x="38" y="206.0" class="tick" text-anchor="end">25%</text><line x1="46" x2="474" y1="150.0" y2="150.0" class="grid"/><text x="38" y="154.0" class="tick" text-anchor="end">50%</text><line x1="46" x2="474" y1="98.0" y2="98.0" class="grid"/><text x="38" y="102.0" class="tick" text-anchor="end">75%</text><line x1="46" x2="474" y1="46.0" y2="46.0" class="grid"/><text x="38" y="50.0" class="tick" text-anchor="end">100%</text><text x="46.0" y="272" class="tick" text-anchor="middle">0%</text><text x="153.0" y="272" class="tick" text-anchor="middle">25%</text><text x="260.0" y="272" class="tick" text-anchor="middle">50%</text><text x="367.0" y="272" class="tick" text-anchor="middle">75%</text><text x="474.0" y="272" class="tick" text-anchor="middle">100%</text><text x="260.0" y="294" class="axis" text-anchor="middle">hallucination rate (lower is better)</text><text x="12" y="150.0" class="axis" transform="rotate(-90 12 150.0)" text-anchor="middle">cases fully correct</text><circle cx="207.5" cy="156.9" r="7" class="pt"><title>groq/qwen/qwen3.8-27b v1</title></circle><circle cx="70.2" cy="87.6" r="7" class="pt"><title>groq/qwen/qwen3.8-27b v2</title></circle><circle cx="55.5" cy="86.0" r="7" class="pt"><title>groq/openai/gpt-oss-20b v2</title></circle><text x="218.5" y="160.9" class="lbl">1</text><text x="81.2" y="91.6" class="lbl">2</text><text x="66.5" y="90.0" class="lbl">3</text></svg></div>
+    <div class="legend"><h2>Field outcomes</h2>
+      <p><span class="seg correct"></span> correct</p><p><span class="seg wrong"></span> wrong value</p>
+      <p><span class="seg missed"></span> missed, although stated</p><p><span class="seg hallucinated"></span> invented, although not stated</p>
+      <p class="meta">A value counts as stated only if it appears in the text the model saw. Otherwise the right answer is null.</p></div>
+  </section>
+  <section><h2>Runs</h2><div class="runs">
+<article class="run">
+  <header><span class="num">1</span><div><h3>groq/qwen/qwen3.8-27b</h3><p class="meta">prompt v1 · e8daabdc8b12 · 2026-10-25 18:23</p></div></header>
+  <dl class="kpis">
+    <div><dt>Cases fully correct</dt><dd>47%</dd></div>
+    <div><dt>Fields correct</dt><dd>79%</dd></div>
+    <div class="bad"><dt>Hallucination rate</dt><dd>38%</dd></div>
+    <div><dt>Median latency</dt><dd>6453 ms</dd></div>
+  </dl>
+  <div class="bars"><div class="fbar"><span class="fname">study type</span><span class="track"><span class="seg correct" style="width:90.0%" title="correct: 27"></span><span class="seg wrong" style="width:10.0%" title="wrong: 3"></span></span><span class="fnum">27/30</span></div><div class="fbar"><span class="fname">phase</span><span class="track"><span class="seg correct" style="width:63.3%" title="correct: 19"></span><span class="seg hallucinated" style="width:36.7%" title="hallucinated: 11"></span></span><span class="fnum">19/30</span></div><div class="fbar"><span class="fname">enrollment</span><span class="track"><span class="seg correct" style="width:90.0%" title="correct: 27"></span><span class="seg wrong" style="width:3.3%" title="wrong: 1"></span><span class="seg missed" style="width:3.3%" title="missed: 1"></span><span class="seg hallucinated" style="width:3.3%" title="hallucinated: 1"></span></span><span class="fnum">27/30</span></div><div class="fbar"><span class="fname">minimum age</span><span class="track"><span class="seg correct" style="width:73.3%" title="correct: 22"></span><span class="seg hallucinated" style="width:26.7%" title="hallucinated: 8"></span></span><span class="fnum">22/30</span></div></div>
+  <p class="meta">30 cases scored · 25,812 tokens in, 1,211 out</p>
+</article>
+<article class="run">
+  <header><span class="num">2</span><div><h3>groq/qwen/qwen3.8-27b</h3><p class="meta">prompt v2 · 9f84c2a491cd · 2026-10-25 18:26</p></div></header>
+  <dl class="kpis">
+    <div><dt>Cases fully correct</dt><dd>80%</dd></div>
+    <div><dt>Fields correct</dt><dd>93%</dd></div>
+    <div class=""><dt>Hallucination rate</dt><dd>6%</dd></div>
+    <div><dt>Median latency</dt><dd>8483 ms</dd></div>
+  </dl>
+  <div class="bars"><div class="fbar"><span class="fname">study type</span><span class="track"><span class="seg correct" style="width:90.0%" title="correct: 27"></span><span class="seg wrong" style="width:10.0%" title="wrong: 3"></span></span><span class="fnum">27/30</span></div><div class="fbar"><span class="fname">phase</span><span class="track"><span class="seg correct" style="width:96.7%" title="correct: 29"></span><span class="seg hallucinated" style="width:3.3%" title="hallucinated: 1"></span></span><span class="fnum">29/30</span></div><div class="fbar"><span class="fname">enrollment</span><span class="track"><span class="seg correct" style="width:90.0%" title="correct: 27"></span><span class="seg missed" style="width:6.7%" title="missed: 2"></span><span class="seg hallucinated" style="width:3.3%" title="hallucinated: 1"></span></span><span class="fnum">27/30</span></div><div class="fbar"><span class="fname">minimum age</span><span class="track"><span class="seg correct" style="width:96.7%" title="correct: 29"></span><span class="seg hallucinated" style="width:3.3%" title="hallucinated: 1"></span></span><span class="fnum">29/30</span></div></div>
+  <p class="meta">30 cases scored · 26,832 tokens in, 1,247 out</p>
+</article>
+<article class="run">
+  <header><span class="num">3</span><div><h3>groq/openai/gpt-oss-20b</h3><p class="meta">prompt v2 · 9f84c2a491cd · 2026-10-25 18:34 · incomplete</p></div></header>
+  <dl class="kpis">
+    <div><dt>Cases fully correct</dt><dd>81%</dd></div>
+    <div><dt>Fields correct</dt><dd>95%</dd></div>
+    <div class=""><dt>Hallucination rate</dt><dd>2%</dd></div>
+    <div><dt>Median latency</dt><dd>6099 ms</dd></div>
+  </dl>
+  <div class="bars"><div class="fbar"><span class="fname">study type</span><span class="track"><span class="seg correct" style="width:92.3%" title="correct: 24"></span><span class="seg wrong" style="width:7.7%" title="wrong: 2"></span></span><span class="fnum">24/26</span></div><div class="fbar"><span class="fname">phase</span><span class="track"><span class="seg correct" style="width:100.0%" title="correct: 26"></span></span><span class="fnum">26/26</span></div><div class="fbar"><span class="fname">enrollment</span><span class="track"><span class="seg correct" style="width:88.5%" title="correct: 23"></span><span class="seg missed" style="width:7.7%" title="missed: 2"></span><span class="seg hallucinated" style="width:3.8%" title="hallucinated: 1"></span></span><span class="fnum">23/26</span></div><div class="fbar"><span class="fname">minimum age</span><span class="track"><span class="seg correct" style="width:100.0%" title="correct: 26"></span></span><span class="fnum">26/26</span></div></div>
+  <p class="meta">26 cases scored, 4 not run yet · 24,273 tokens in, 4,225 out</p>
+</article></div></section>
+  <section><h2>Is it really better?</h2>
+    <p class="meta">Paired comparison on the same cases: bootstrap interval for the difference in cases fully correct, and an exact McNemar test on the cases where exactly one run was right.</p>
+    <div class="table-wrap"><table><thead><tr><th>Comparison</th><th>Difference</th><th>95% interval</th><th>Only base / only new</th><th>p</th><th>Verdict</th><th>Regressed cases</th></tr></thead>
+    <tbody><tr><td>2 against 1</td><td class="num">+33%</td><td class="num">+17% to +50%</td><td class="num">0 / 10</td><td class="num">0.002</td><td class="v better">better</td><td></td></tr><tr><td>3 against 1</td><td class="num">+38%</td><td class="num">+15% to +58%</td><td class="num">1 / 11</td><td class="num">0.006</td><td class="v better">better</td><td>NCT05576480</td></tr></tbody></table></div>
+  </section>
+</main>
+<footer class="wrap"><p>Answer key: ClinicalTrials.gov structured fields. Every answer is stored in runs.db.</p></footer>
+</body></html>

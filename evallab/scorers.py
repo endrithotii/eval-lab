@@ -60,6 +60,8 @@ SCORERS = {"exact": exact, "number": number}
 
 
 def score_field(spec: dict, expected, got) -> str:
+    if spec.get("zero_is_null") and _num(got) == 0:
+        got = None   # "0 participants" is a placeholder for "not known", not a claim
     if is_null(expected):
         return "correct" if is_null(got) else "hallucinated"
     if is_null(got):

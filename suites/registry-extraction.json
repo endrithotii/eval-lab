@@ -13,7 +13,8 @@
    "scorer": "exact"
   },
   "enrollment": {
-   "scorer": "number"
+   "scorer": "number",
+   "zero_is_null": true
   },
   "minimum_age": {
    "scorer": "number"
@@ -323,7 +324,7 @@
    },
    "expected": {
     "study_type": "interventional",
-    "phase": null,
+    "phase": "1/2",
     "enrollment": null,
     "minimum_age": null
    },

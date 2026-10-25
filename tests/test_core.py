@@ -32,6 +32,25 @@ class Scoring(unittest.TestCase):
                          {"phase": "missed", "enrollment": "correct"})
 
 
+class SuiteBuilder(unittest.TestCase):
+    """Bugs found while checking the first real runs."""
+
+    def test_combined_phases_count_as_stated(self):
+        import importlib.util, pathlib
+        spec = importlib.util.spec_from_file_location("b", pathlib.Path(__file__).parent.parent / "scripts" / "build_registry_suite.py")
+        b = importlib.util.module_from_spec(spec); spec.loader.exec_module(b)
+        self.assertTrue(b.phase_stated("1/2", "a dose-escalation Phase 1/2a trial"))
+        self.assertTrue(b.phase_stated("1/2", "This phase I/II study"))
+        self.assertTrue(b.phase_stated("2", "a randomised Phase 2b trial"))
+        self.assertFalse(b.phase_stated("3", "a phase 2 study"))
+        self.assertFalse(b.phase_stated("2", "Part 2 is a dose expansion"))
+
+    def test_zero_participants_is_no_answer(self):
+        spec = {"scorer": "number", "zero_is_null": True}
+        self.assertEqual(scorers.score_field(spec, None, 0), "correct")
+        self.assertEqual(scorers.score_field(spec, 80, 0), "missed")
+
+
 class Statistics(unittest.TestCase):
     def test_identical_runs_show_no_difference(self):
         a = [True, False] * 15

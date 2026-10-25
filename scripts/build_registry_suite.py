@@ -47,16 +47,22 @@ def phase_label(phases: list[str]) -> str | None:
     return "/".join(nums)
 
 
+_PHASE = re.compile(r"phase\s*((?:[0-4]|iv|i{1,3})[ab]?(?:\s*[/-]\s*(?:[0-4]|iv|i{1,3})[ab]?)*)\b", re.I)
+_ROMAN = {"iv": "4", "iii": "3", "ii": "2", "i": "1"}
+
+
+def phases_mentioned(text: str) -> set[str]:
+    """Every phase number the text states: 'Phase 1/2a', 'phase I/II', 'Phase 2b' all count."""
+    out = set()
+    for m in _PHASE.finditer(text):
+        for part in re.split(r"\s*[/-]\s*", m.group(1).lower()):
+            part = part.rstrip("ab")
+            out.add(_ROMAN.get(part, part))
+    return out
+
+
 def phase_stated(label: str | None, text: str) -> bool:
-    if label is None:
-        return False
-    t = text.lower()
-    roman = {"0": "0", "1": "i", "2": "ii", "3": "iii", "4": "iv"}
-    for part in label.split("/"):
-        # "Phase 2", "phase II", "Phase 2b", "Phase Ib" all state the phase.
-        if not re.search(rf"phase\s*(?:{part}|{roman[part]})(?:[ab]\b|\b)", t):
-            return False
-    return True
+    return label is not None and set(label.split("/")) <= phases_mentioned(text)
 
 
 def case(study: dict) -> dict | None:
@@ -106,7 +112,7 @@ def main():
         "fields": {
             "study_type": {"scorer": "exact", "values": ["interventional", "observational"]},
             "phase": {"scorer": "exact"},
-            "enrollment": {"scorer": "number"},
+            "enrollment": {"scorer": "number", "zero_is_null": True},
             "minimum_age": {"scorer": "number"},
         },
         "prompts": {
